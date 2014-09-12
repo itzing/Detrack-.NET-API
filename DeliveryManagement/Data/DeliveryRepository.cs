@@ -52,7 +52,7 @@ namespace DeliveryManagement.Data
 				};
 
 					var respBytes = client.UploadValues(ViewAllDeliveriesUrl, fields);
-					var resp = client.Encoding.GetString(respBytes);s
+					var resp = client.Encoding.GetString(respBytes);
 
 					var myData = JsonConvert.DeserializeObject<DeliveryListResponse>(resp);
 
