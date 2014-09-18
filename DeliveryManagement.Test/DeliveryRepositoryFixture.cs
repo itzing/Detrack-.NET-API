@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using DeliveryManagement.Data;
 using DeliveryManagement.Model;
+using DeliveryManagement.Model.Deliveries;
 using DeliveryManagement.Tools;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace DeliveryManagement.Test
 {
@@ -17,6 +20,30 @@ namespace DeliveryManagement.Test
 			var repository = new DeliveryRepository();
 
 			repository.DeleteDeliveriesForDate(DateTime.Now);
+		}
+
+
+		private readonly JsonSerializerSettings serializeSettings = new JsonSerializerSettings
+		{
+			DateFormatString = "yyyy-MM-dd",
+			NullValueHandling = NullValueHandling.Ignore,
+			DefaultValueHandling = DefaultValueHandling.Ignore,
+			ContractResolver = new CamelCasePropertyNamesContractResolver(),
+		};
+
+		[TestMethod]
+		public void TestJson()
+		{
+			var delivery = new Delivery(DateTime.Now, string.Format("DO{0}", DataHelper.GetNumericString(9)), string.Format("{0} Ubi Avenue {1} Singapore {2}", DataHelper.GetNumber(1, 99), DataHelper.GetNumber(), DataHelper.GetNumber(0, 999)));
+
+			delivery.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
+			delivery.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
+
+			var json = JsonConvert.SerializeObject(delivery);
+
+			var deli = JsonConvert.DeserializeObject<Delivery>(json);
+
+			Assert.IsNotNull(deli);
 		}
 
 		[TestMethod]
@@ -111,6 +138,17 @@ namespace DeliveryManagement.Test
 			repo.Add(new List<Delivery>{delivery1});
 
 			Assert.AreEqual(repo.GetDelivery(DateTime.Now, deliveryId1).Do, deliveryId1);
+		}
+
+		[TestMethod]
+		public void GetSignatureImage()
+		{
+			var repo = new DeliveryRepository("c9fa6fc31cf7ef373a9925f330ad52ea59244cabda6ef46e");
+			var deliveryId1 = "8897978";
+
+			var delivery1 = new Delivery(new DateTime(2014, 8, 29), deliveryId1);
+
+			Assert.IsNotNull(repo.GetSignatureImage(delivery1));
 		}
 	}
 }

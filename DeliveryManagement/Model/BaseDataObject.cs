@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace DeliveryManagement.Model
 {
-	public class Delivery
+	public class BaseDataObject
 	{
-		public Delivery(DateTime date, string id, string address)
+		public BaseDataObject(DateTime date, string id, string address)
 		{
 			Date = date;
 			Do = id;
@@ -13,22 +16,20 @@ namespace DeliveryManagement.Model
 			Items = new List<Item>();
 		}
 
-		public Delivery(DateTime date, string id)
+		public BaseDataObject(DateTime date, string id)
 		{
 			Date = date;
 			Do = id;
 			Items = new List<Item>();
 		}
 
-		public Delivery()
+		public BaseDataObject()
 		{
 			
 		}
 
 		public DateTime Date { get; set; }
 		public string Address { get; set; }
-		public string Delivery_Time { get; set; }
-		public string Deliver_To { get; set; }
 		public string Phone { get; set; }
 		public string Notify_Email { get; set; }
 		public string Notify_Url { get; set; }
@@ -37,7 +38,6 @@ namespace DeliveryManagement.Model
 		public string Zone { get; set; }
 		public string Reason { get; set; }
 		public string Note { get; set; }
-		public string Received_By { get; set; }
 		public int Image { get; set; }
 		public string View_Image_Url { get; set; }
 		public string View_Signature_Url { get; set; }
@@ -54,5 +54,6 @@ namespace DeliveryManagement.Model
 		public string Job_Order { get; set; }
 
 		public List<Item> Items { get; set; }
+
 	}
 }

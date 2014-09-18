@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Drawing;
 using DeliveryManagement.Model;
+using DeliveryManagement.Model.Deliveries;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using DeliveryManagement.Tools;
 
 namespace DeliveryManagement.Data
 {
@@ -16,15 +19,21 @@ namespace DeliveryManagement.Data
 		private const string ViewDeliveriesUrl = @"https://app.detrack.com/api/v1/deliveries/view.json";
 		private const string AddDeliveriesUrl = @"https://app.detrack.com/api/v1/deliveries/create.json";
 		private const string EditDeliveriesUrl = @"https://app.detrack.com/api/v1/deliveries/update.json";
-		private const string GetSignatureImageUrl = @"https://app.detrack.com/api/v1/deliveries/view/signature.json";
+		private const string GetSignatureImageUrl = @"https://app.detrack.com/api/v1/deliveries/signature.json";
 		private const string DeleteDeliveriesUrl = @"https://app.detrack.com/api/v1/deliveries/delete/all.json";
 
-		private readonly JsonSerializerSettings settings = new JsonSerializerSettings
+		private readonly JsonSerializerSettings serializeSettings = new JsonSerializerSettings
 		{
 			DateFormatString = "yyyy-MM-dd",
 			NullValueHandling = NullValueHandling.Ignore,
 			DefaultValueHandling = DefaultValueHandling.Ignore,
-			ContractResolver = new CamelCasePropertyNamesContractResolver()
+			ContractResolver = new CamelCasePropertyNamesContractResolver(),
+		};
+
+		private readonly JsonSerializerSettings deserializeSettings = new JsonSerializerSettings
+		{
+			//TypeNameHandling = TypeNameHandling.None,
+			
 		};
 
 		private readonly string Key;
@@ -46,17 +55,17 @@ namespace DeliveryManagement.Data
 				using (var client = new WebClient())
 				{
 					var fields = new NameValueCollection
-				{
-					{"key", Key},
-					{"json", string.Format("{{\"date\":\"{0}-{1}-{2}\"}}", date.Year, date.Month, date.Day)}
-				};
+					{
+						{"key", Key},
+						{"json", string.Format("{{\"date\":\"{0}-{1}-{2}\"}}", date.Year, date.Month, date.Day)}
+					};
 
 					var respBytes = client.UploadValues(ViewAllDeliveriesUrl, fields);
 					var resp = client.Encoding.GetString(respBytes);
 
-					var myData = JsonConvert.DeserializeObject<DeliveryListResponse>(resp);
+					var response = JsonConvert.DeserializeObject<ListResponse>(resp, deserializeSettings);
 
-					return myData.Deliveries;
+					return response.Deliveries;
 				}
 			}
 			catch (Exception ex)
@@ -74,13 +83,13 @@ namespace DeliveryManagement.Data
 					var fields = new NameValueCollection
 					{
 						{"key", Key},
-						{"json", JsonConvert.SerializeObject(deliveries, settings)}
+						{"json", JsonConvert.SerializeObject(deliveries, serializeSettings)}
 					};
 
 					var respBytes = client.UploadValues(AddDeliveriesUrl, fields);
 					var resp = client.Encoding.GetString(respBytes);
 
-					var deliveryAddResponse = JsonConvert.DeserializeObject<DeliveryAddResponse>(resp);
+					var deliveryAddResponse = JsonConvert.DeserializeObject<AddResponse>(resp, deserializeSettings);
 
 					if (deliveryAddResponse.Info.Failed > 0 || !deliveryAddResponse.Info.Status.Equals("ok", StringComparison.InvariantCultureIgnoreCase))
 						throw new Exception("Add deliveries failed.");
@@ -101,13 +110,13 @@ namespace DeliveryManagement.Data
 					var fields = new NameValueCollection
 					{
 						{"key", Key},
-						{"json", JsonConvert.SerializeObject(deliveries, settings)}
+						{"json", JsonConvert.SerializeObject(deliveries, serializeSettings)}
 					};
 
 					var respBytes = client.UploadValues(EditDeliveriesUrl, fields);
 					var resp = client.Encoding.GetString(respBytes);
 
-					var deliveryEditResponse = JsonConvert.DeserializeObject<DeliveryEditResponse>(resp);
+					var deliveryEditResponse = JsonConvert.DeserializeObject<EditResponse>(resp, deserializeSettings);
 
 					if (deliveryEditResponse.Info.Failed > 0 || !deliveryEditResponse.Info.Status.Equals("ok", StringComparison.InvariantCultureIgnoreCase))
 						throw new Exception("Edit deliveries failed.");
@@ -121,7 +130,39 @@ namespace DeliveryManagement.Data
 
 		public Image GetSignatureImage(Delivery delivery)
 		{
-			return null;
+			try
+			{
+				Image result;
+				byte[] respBytes;
+				using (var client = new WebClient())
+				{
+					var fields = new NameValueCollection
+					{
+						{"key", Key},
+						{"json", string.Format("{{\"date\":\"{0}-{1}-{2}\", \"do\":\"{3}\"}}", delivery.Date.Year, delivery.Date.Month, delivery.Date.Day, delivery.Do)}
+					};
+
+					 respBytes = client.UploadValues(GetSignatureImageUrl, fields);
+				}
+				
+				using (var streamBitmap = new MemoryStream(respBytes))
+				{
+					using (var image = Image.FromStream(streamBitmap))
+					{
+						result = new Bitmap(image);
+					}
+				}
+
+				var imagePath = string.Format("{0}_{1}_Signature.jpg", delivery.Date.ToString("yyyy-MM-dd"), delivery.Do);
+
+				ImageHelper.SaveImage(imagePath, result);
+
+				return result;
+			}
+			catch (Exception ex)
+			{
+				return null;
+			}
 		}
 
 		public void DeleteDeliveriesForDate(DateTime date)
@@ -139,7 +180,7 @@ namespace DeliveryManagement.Data
 					var respBytes = client.UploadValues(DeleteDeliveriesUrl, fields);
 					var resp = client.Encoding.GetString(respBytes);
 
-					var response = JsonConvert.DeserializeObject<DeliveryDeleteResponse>(resp);
+					var response = JsonConvert.DeserializeObject<DeleteResponse<Delivery>>(resp, deserializeSettings);
 
 					if (response.Info.Failed > 0 || !response.Info.Status.Equals("ok", StringComparison.InvariantCultureIgnoreCase))
 						throw new Exception("Add deliveries failed.");
@@ -166,13 +207,13 @@ namespace DeliveryManagement.Data
 					var fields = new NameValueCollection
 					{
 						{"key", Key},
-						{"json", JsonConvert.SerializeObject(deliveries, settings)}
+						{"json", JsonConvert.SerializeObject(deliveries, serializeSettings)}
 					};
 
 					var respBytes = client.UploadValues(ViewDeliveriesUrl, fields);
 					var resp = client.Encoding.GetString(respBytes);
 
-					var response = JsonConvert.DeserializeObject<ViewDeliveriesResponse>(resp);
+					var response = JsonConvert.DeserializeObject<ViewResponse>(resp, deserializeSettings);
 
 					return response.Results.Select(d => d.Delivery);
 				}

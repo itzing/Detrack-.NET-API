@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("DeliveryManagement.Test")]
+[assembly: AssemblyTitle("Infrastructure")]
 [assembly: ComVisible(false)]
-[assembly: Guid("49ab003f-d6b1-4eee-a83b-7131bacad314")]
+
+[assembly: Guid("1e9a81d5-ef87-4bcb-b5dc-8fdea9485f9c")]

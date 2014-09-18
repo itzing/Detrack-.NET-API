@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8DB8990C-67BC-4894-AE43-06EDAEB75FDB}</ProjectGuid>
+    <ProjectGuid>{866C3818-E4D2-4E47-90C4-35479DB26A4B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DeliveryManagement</RootNamespace>
-    <AssemblyName>DeliveryManagement</AssemblyName>
+    <RootNamespace>Infrastructure</RootNamespace>
+    <AssemblyName>Infrastructure</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -30,14 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.5\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -48,32 +43,9 @@
     <Compile Include="..\JsonServiceRequest\Properties\AssemblyVersion.cs">
       <Link>Properties\AssemblyVersion.cs</Link>
     </Compile>
-    <Compile Include="ApiKey.cs" />
-    <Compile Include="Data\CollectionRepository.cs" />
-    <Compile Include="DeliveryManager.cs" />
-    <Compile Include="Data\DeliveryRepository.cs" />
-    <Compile Include="Model\BaseDataObject.cs" />
-    <Compile Include="Model\BaseResponse.cs" />
-    <Compile Include="Model\Collections\Collection.cs" />
-    <Compile Include="Model\ListResponse.cs" />
-    <Compile Include="Model\Deliveries\Delivery.cs" />
-    <Compile Include="Model\AddResponse.cs" />
-    <Compile Include="Model\DeleteResponse.cs" />
-    <Compile Include="Model\EditResponse.cs" />
-    <Compile Include="Model\Error.cs" />
-    <Compile Include="Model\Info.cs" />
-    <Compile Include="Model\Item.cs" />
-    <Compile Include="Model\OperationResult.cs" />
-    <Compile Include="Model\ViewResponse.cs" />
+    <Compile Include="LocalStorage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tools\DataHelper.cs" />
-    <Compile Include="Tools\ImageHelper.cs" />
-    <Compile Include="Data\SQL\DeliveriesFetcher.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
