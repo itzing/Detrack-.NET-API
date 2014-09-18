@@ -52,7 +52,7 @@ namespace Detrack.Data.Test
 
 			var manager = new DeliveryRepository();
 
-			var result = manager.GetForDate(DateTime.Now);
+			var result = manager.GetAllForDate(DateTime.Now);
 
 			Assert.AreEqual(result.Count(), 2);
 		}
@@ -73,7 +73,7 @@ namespace Detrack.Data.Test
 
 			manager.Add(new List<Delivery>{delivery, delivery1});
 
-			Assert.AreEqual(manager.GetForDate(DateTime.Now).Count(), 2);
+			Assert.AreEqual(manager.GetAllForDate(DateTime.Now).Count(), 2);
 		}
 
 		[TestMethod]
@@ -85,7 +85,7 @@ namespace Detrack.Data.Test
 
 			repo.DeleteDeliveriesForDate(DateTime.Now);
 
-			Assert.AreEqual(repo.GetForDate(DateTime.Now).Count(), 0);
+			Assert.AreEqual(repo.GetAllForDate(DateTime.Now).Count(), 0);
 		}
 
 		[TestMethod]
