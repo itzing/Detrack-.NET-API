@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("DetrackSync")]
+[assembly: AssemblyTitle("Detrack.Main")]
 
 
 [assembly: ComVisible(false)]

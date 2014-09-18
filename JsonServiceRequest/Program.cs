@@ -1,39 +1,26 @@
 ﻿using System;
-using System.Collections.Specialized;
-using System.Net;
-using DeliveryManagement;
-using DeliveryManagement.Data;
-using DeliveryManagement.Model;
-using Newtonsoft.Json;
+using System.Threading;
+using System.Windows.Forms;
 
-
-namespace JsonServiceRequest
+namespace Detrack.Main
 {
-	class Program
+	static class Program
 	{
+		static readonly Mutex mutex = new Mutex(true, "{8F6F0AC4-B9A1-45fd-A8CF-72F04E6BDE8F}");
+
+		[STAThread]
 		static void Main(string[] args)
 		{
-			var manager = new DeliveryRepository();
-
-			var result = manager.GetForDate(new DateTime(2014, 8, 29));
-
-			//const string url = @"https://app.detrack.com/api/v1/deliveries/view/all.json";
-
-			//using (var client = new WebClient())
-			//{
-			//	var fields = new NameValueCollection
-			//	{
-			//		{"key", ApiKey.Key},
-			//		{"json", "{\"date\":\"2014-08-29\"}"}
-			//	};
-
-			//	var respBytes = client.UploadValues(url, fields);
-			//	var resp = client.Encoding.GetString(respBytes);
-
-			//	var myData = JsonConvert.DeserializeObject<DeliveryListResponse>(resp);
-
-			//	Console.ReadLine();
-			//}
+			if (mutex.WaitOne(TimeSpan.Zero, true))
+			{
+				var synchronizer = new DetrackSynchronizer();
+				Application.Run(synchronizer);
+				mutex.ReleaseMutex();
+			}
+			else 
+			{
+				Application.Exit();
+			}
 		}
 	}
 }

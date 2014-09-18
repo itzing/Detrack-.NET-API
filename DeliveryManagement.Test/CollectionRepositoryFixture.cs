@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using DeliveryManagement.Data;
-using DeliveryManagement.Model;
-using DeliveryManagement.Model.Collections;
-using DeliveryManagement.Tools;
+using Detrack.Infrastructure.Tools;
+using Detrack.Model;
+using Detrack.Model.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
-namespace DeliveryManagement.Test
+namespace Detrack.Data.Test
 {
 	[TestClass]
 	public class CollectionRepositoryFixture

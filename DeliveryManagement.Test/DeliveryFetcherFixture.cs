@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DeliveryManagement.Data.SQL;
+﻿using System.Linq;
+using Detrack.Data.SQL;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace DeliveryManagement.Test
+namespace Detrack.Data.Test
 {
 	[TestClass]
 	public class DeliveryFetcherFixture
