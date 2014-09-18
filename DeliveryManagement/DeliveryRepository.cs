@@ -67,13 +67,13 @@ namespace Detrack.Data
 					return response.Deliveries;
 				}
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
-				throw;
+				return new List<Delivery>();
 			}
 		}
 
-		public void Add(List<Delivery> deliveries)
+		public AddResponse Add(List<Delivery> deliveries)
 		{
 			try
 			{
@@ -90,17 +90,29 @@ namespace Detrack.Data
 
 					var deliveryAddResponse = JsonConvert.DeserializeObject<AddResponse>(resp, deserializeSettings);
 
-					if (deliveryAddResponse.Info.Failed > 0 || !deliveryAddResponse.Info.Status.Equals("ok", StringComparison.InvariantCultureIgnoreCase))
-						throw new Exception("Add deliveries failed.");
+					if (deliveryAddResponse != null)
+						return deliveryAddResponse;
+					
+					throw new Exception("Add deliveries failed.");
 				}
 			}
 			catch (Exception ex)
 			{
-				throw;
+				return new AddResponse()
+				{
+					Info = new Info
+					{
+						Status = Status.failed.ToString(),
+						Error = new Error()
+						{
+							Message = ex.Message
+						}
+					}
+				};
 			}
 		}
 
-		public void EditDeliveries(List<Delivery> deliveries)
+		public EditResponse EditDeliveries(List<Delivery> deliveries)
 		{
 			try
 			{
@@ -117,13 +129,22 @@ namespace Detrack.Data
 
 					var deliveryEditResponse = JsonConvert.DeserializeObject<EditResponse>(resp, deserializeSettings);
 
-					if (deliveryEditResponse.Info.Failed > 0 || !deliveryEditResponse.Info.Status.Equals("ok", StringComparison.InvariantCultureIgnoreCase))
-						throw new Exception("Edit deliveries failed.");
+					return deliveryEditResponse;
 				}
 			}
 			catch (Exception ex)
 			{
-				throw;
+				return new EditResponse()
+				{
+					Info = new Info
+					{
+						Status = Status.failed.ToString(),
+						Error = new Error()
+						{
+							Message = ex.Message
+						}
+					}
+				};
 			}
 		}
 
@@ -164,7 +185,7 @@ namespace Detrack.Data
 			}
 		}
 
-		public void DeleteDeliveriesForDate(DateTime date)
+		public DeleteResponse DeleteDeliveriesForDate(DateTime date)
 		{
 			try
 			{
@@ -179,24 +200,39 @@ namespace Detrack.Data
 					var respBytes = client.UploadValues(DeleteDeliveriesUrl, fields);
 					var resp = client.Encoding.GetString(respBytes);
 
-					var response = JsonConvert.DeserializeObject<DeleteResponse<Delivery>>(resp, deserializeSettings);
+					var response = JsonConvert.DeserializeObject<DeleteResponse>(resp, deserializeSettings);
 
-					if (response.Info.Failed > 0 || !response.Info.Status.Equals("ok", StringComparison.InvariantCultureIgnoreCase))
-						throw new Exception("Add deliveries failed.");
+					return response;
 				}
 			}
 			catch (Exception ex)
 			{
-				throw;
+				return new DeleteResponse()
+				{
+					Info = new Info
+					{
+						Status = Status.failed.ToString(),
+						Error = new Error()
+						{
+							Message = ex.Message
+						}
+					}
+				};
 			}
 		}
 
 		public Delivery GetDelivery(DateTime deliveryDate, string deliveryDo)
 		{
-			return GetDeliveries(new List<Delivery> {new Delivery(deliveryDate, deliveryDo)}).FirstOrDefault(d => d.Do == deliveryDo);
+			var response =
+				GetDeliveries(new List<Delivery> {new Delivery(deliveryDate, deliveryDo)});
+
+			if (response.Info.Status == Status.failed.ToString())
+				return null;
+
+			return response.Results.Count() != 0 ? response.Results.Select(d => d.Delivery).FirstOrDefault(d => d.Do == deliveryDo) : null;
 		}
 
-		public IEnumerable<Delivery> GetDeliveries(IEnumerable<Delivery> deliveries)
+		public ViewResponse GetDeliveries(IEnumerable<Delivery> deliveries)
 		{
 			try
 			{
@@ -214,12 +250,22 @@ namespace Detrack.Data
 
 					var response = JsonConvert.DeserializeObject<ViewResponse>(resp, deserializeSettings);
 
-					return response.Results.Select(d => d.Delivery);
+					return response;
 				}
 			}
 			catch (Exception ex)
 			{
-				throw;
+				return new ViewResponse
+				{
+					Info = new Info 
+					{
+						Status = Status.failed.ToString(), 
+						Error = new Error()
+						{
+							Message = ex.Message
+						}
+					}
+				};
 			}
 		}
 

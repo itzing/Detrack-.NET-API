@@ -52,7 +52,7 @@
     <Compile Include="DeliveryRepository.cs" />
     <Compile Include="Interfaces\IDeliveryRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SQL\DeliveriesFetcher.cs" />
+    <Compile Include="SQL\SqlDatabase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

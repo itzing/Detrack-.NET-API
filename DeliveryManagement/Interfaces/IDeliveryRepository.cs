@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using Detrack.Model;
 using Detrack.Model.Deliveries;
 
 namespace Detrack.Data.Interfaces
@@ -9,11 +10,11 @@ namespace Detrack.Data.Interfaces
 	{
 		IEnumerable<Delivery> GetAllForDate(DateTime date);
 		Delivery GetDelivery(DateTime deliveryDate, string deliveryDo);
-		IEnumerable<Delivery> GetDeliveries(IEnumerable<Delivery> deliveries);
+		ViewResponse GetDeliveries(IEnumerable<Delivery> deliveries);
 
-		void Add(List<Delivery> deliveries);
-		void EditDeliveries(List<Delivery> deliveries);
-		void DeleteDeliveriesForDate(DateTime date);
+		AddResponse Add(List<Delivery> deliveries);
+		EditResponse EditDeliveries(List<Delivery> deliveries);
+		DeleteResponse DeleteDeliveriesForDate(DateTime date);
 
 		Image GetSignatureImage(Delivery delivery);
 	}

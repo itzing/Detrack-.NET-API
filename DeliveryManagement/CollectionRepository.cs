@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Drawing;
+using Detrack.Data.Interfaces;
 using Detrack.Infrastructure.Tools;
 using Detrack.Model.Collections;
 using Detrack.Model;
@@ -32,7 +33,6 @@ namespace Detrack.Data
 
 		private readonly JsonSerializerSettings deserializeSettings = new JsonSerializerSettings
 		{
-		
 		};
 
 		private readonly string Key;
@@ -47,7 +47,7 @@ namespace Detrack.Data
 			Key = key;
 		}
 
-		public IEnumerable<Collection> GetForDate(DateTime date)
+		public IEnumerable<Collection> GetAllForDate(DateTime date)
 		{
 			try
 			{
@@ -67,13 +67,13 @@ namespace Detrack.Data
 					return response.Collections;
 				}
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
-				throw;
+				return new List<Collection>();
 			}
 		}
 
-		public void Add(List<Collection> collections)
+		public AddResponse Add(List<Collection> collections)
 		{
 			try
 			{
@@ -90,17 +90,29 @@ namespace Detrack.Data
 
 					var collectionAddResponse = JsonConvert.DeserializeObject<AddResponse>(resp, deserializeSettings);
 
-					if (collectionAddResponse.Info.Failed > 0 || !collectionAddResponse.Info.Status.Equals("ok", StringComparison.InvariantCultureIgnoreCase))
-						throw new Exception("Add collections failed.");
+					if (collectionAddResponse != null)
+						return collectionAddResponse;
+					
+					throw new Exception("Add collections failed.");
 				}
 			}
 			catch (Exception ex)
 			{
-				throw;
+				return new AddResponse()
+				{
+					Info = new Info
+					{
+						Status = Status.failed.ToString(),
+						Error = new Error()
+						{
+							Message = ex.Message
+						}
+					}
+				};
 			}
 		}
 
-		public void EditCollections(List<Collection> collections)
+		public EditResponse EditCollections(List<Collection> collections)
 		{
 			try
 			{
@@ -117,54 +129,63 @@ namespace Detrack.Data
 
 					var collectionEditResponse = JsonConvert.DeserializeObject<EditResponse>(resp, deserializeSettings);
 
-					if (collectionEditResponse.Info.Failed > 0 || !collectionEditResponse.Info.Status.Equals("ok", StringComparison.InvariantCultureIgnoreCase))
-						throw new Exception("Edit collections failed.");
+					return collectionEditResponse;
 				}
 			}
 			catch (Exception ex)
 			{
-				throw;
-			}
-		}
-
-		public Image GetSignatureImage(Collection collection)
-		{
-			try
-			{
-				Image result;
-				byte[] respBytes;
-				using (var client = new WebClient())
+				return new EditResponse()
 				{
-					var fields = new NameValueCollection
+					Info = new Info
 					{
-						{"key", Key},
-						{"json", string.Format("{{\"date\":\"{0}-{1}-{2}\", \"do\":\"{3}\"}}", collection.Date.Year, collection.Date.Month, collection.Date.Day, collection.Do)}
-					};
-
-					 respBytes = client.UploadValues(GetSignatureImageUrl, fields);
-				}
-				
-				using (var streamBitmap = new MemoryStream(respBytes))
-				{
-					using (var image = Image.FromStream(streamBitmap))
-					{
-						result = new Bitmap(image);
+						Status = Status.failed.ToString(),
+						Error = new Error()
+						{
+							Message = ex.Message
+						}
 					}
-				}
-
-				var imagePath = string.Format("{0}_{1}_Signature.jpg", collection.Date.ToString("yyyy-MM-dd"), collection.Do);
-
-				ImageHelper.SaveImage(imagePath, result);
-
-				return result;
-			}
-			catch (Exception ex)
-			{
-				return null;
+				};
 			}
 		}
 
-		public void DeleteCollectionsForDate(DateTime date)
+		//public Image GetSignatureImage(Collection collection)
+		//{
+		//	try
+		//	{
+		//		Image result;
+		//		byte[] respBytes;
+		//		using (var client = new WebClient())
+		//		{
+		//			var fields = new NameValueCollection
+		//			{
+		//				{"key", Key},
+		//				{"json", string.Format("{{\"date\":\"{0}-{1}-{2}\", \"do\":\"{3}\"}}", collection.Date.Year, collection.Date.Month, collection.Date.Day, collection.Do)}
+		//			};
+
+		//			 respBytes = client.UploadValues(GetSignatureImageUrl, fields);
+		//		}
+				
+		//		using (var streamBitmap = new MemoryStream(respBytes))
+		//		{
+		//			using (var image = Image.FromStream(streamBitmap))
+		//			{
+		//				result = new Bitmap(image);
+		//			}
+		//		}
+
+		//		var imagePath = string.Format("{0}_{1}_Signature.jpg", collection.Date.ToString("yyyy-MM-dd"), collection.Do);
+
+		//		ImageHelper.SaveImage(imagePath, result);
+
+		//		return result;
+		//	}
+		//	catch (Exception ex)
+		//	{
+		//		return null;
+		//	}
+		//}
+
+		public DeleteResponse DeleteCollectionsForDate(DateTime date)
 		{
 			try
 			{
@@ -179,24 +200,39 @@ namespace Detrack.Data
 					var respBytes = client.UploadValues(DeleteCollectionsUrl, fields);
 					var resp = client.Encoding.GetString(respBytes);
 
-					var response = JsonConvert.DeserializeObject<DeleteResponse<Collection>>(resp, deserializeSettings);
+					var response = JsonConvert.DeserializeObject<DeleteResponse>(resp, deserializeSettings);
 
-					if (response.Info.Failed > 0 || !response.Info.Status.Equals("ok", StringComparison.InvariantCultureIgnoreCase))
-						throw new Exception("Add collections failed.");
+					return response;
 				}
 			}
 			catch (Exception ex)
 			{
-				throw;
+				return new DeleteResponse()
+				{
+					Info = new Info
+					{
+						Status = Status.failed.ToString(),
+						Error = new Error()
+						{
+							Message = ex.Message
+						}
+					}
+				};
 			}
 		}
 
 		public Collection GetCollection(DateTime collectionDate, string collectionDo)
 		{
-			return GetCollections(new List<Collection> {new Collection(collectionDate, collectionDo)}).FirstOrDefault(d => d.Do == collectionDo);
+			var response =
+				GetCollections(new List<Collection> {new Collection(collectionDate, collectionDo)});
+
+			if (response.Info.Status == Status.failed.ToString())
+				return null;
+
+			return response.Results.Count() != 0 ? response.Results.Select(d => d.Collection).FirstOrDefault(d => d.Do == collectionDo) : null;
 		}
 
-		public IEnumerable<Collection> GetCollections(IEnumerable<Collection> collections)
+		public ViewResponse GetCollections(IEnumerable<Collection> collections)
 		{
 			try
 			{
@@ -214,12 +250,22 @@ namespace Detrack.Data
 
 					var response = JsonConvert.DeserializeObject<ViewResponse>(resp, deserializeSettings);
 
-					return response.Results.Select(d => d.Collection);
+					return response;
 				}
 			}
 			catch (Exception ex)
 			{
-				throw;
+				return new ViewResponse
+				{
+					Info = new Info 
+					{
+						Status = Status.failed.ToString(), 
+						Error = new Error()
+						{
+							Message = ex.Message
+						}
+					}
+				};
 			}
 		}
 

@@ -1,21 +1,28 @@
 ﻿using System;
 using System.Threading;
 using System.Windows.Forms;
+using Detrack.Infrastructure.Exceptions;
 
 namespace Detrack.Main
 {
 	static class Program
 	{
-		static readonly Mutex mutex = new Mutex(true, "{8F6F0AC4-B9A1-45fd-A8CF-72F04E6BDE8F}");
+		static readonly Mutex mutex = new Mutex(true, "{90CFA72E-0CCB-4950-9F1C-B627B7C5D57A}");
 
 		[STAThread]
 		static void Main(string[] args)
 		{
 			if (mutex.WaitOne(TimeSpan.Zero, true))
 			{
-				var synchronizer = new DetrackSynchronizer();
-				Application.Run(synchronizer);
-				mutex.ReleaseMutex();
+				try
+				{
+					Application.Run(new DetrackSynchronizer());
+				}
+				catch (ApplicationShutdownException)
+				{
+					mutex.ReleaseMutex();
+					Application.Exit();
+				}
 			}
 			else 
 			{

@@ -5,8 +5,6 @@ using Detrack.Infrastructure.Tools;
 using Detrack.Model;
 using Detrack.Model.Deliveries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace Detrack.Data.Test
 {
@@ -21,30 +19,6 @@ namespace Detrack.Data.Test
 			repository.DeleteDeliveriesForDate(DateTime.Now);
 		}
 
-
-		private readonly JsonSerializerSettings serializeSettings = new JsonSerializerSettings
-		{
-			DateFormatString = "yyyy-MM-dd",
-			NullValueHandling = NullValueHandling.Ignore,
-			DefaultValueHandling = DefaultValueHandling.Ignore,
-			ContractResolver = new CamelCasePropertyNamesContractResolver(),
-		};
-
-		[TestMethod]
-		public void TestJson()
-		{
-			var delivery = new Delivery(DateTime.Now, string.Format("DO{0}", DataHelper.GetNumericString(9)), string.Format("{0} Ubi Avenue {1} Singapore {2}", DataHelper.GetNumber(1, 99), DataHelper.GetNumber(), DataHelper.GetNumber(0, 999)));
-
-			delivery.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
-			delivery.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
-
-			var json = JsonConvert.SerializeObject(delivery);
-
-			var deli = JsonConvert.DeserializeObject<Delivery>(json);
-
-			Assert.IsNotNull(deli);
-		}
-
 		[TestMethod]
 		public void GetDeliveries()
 		{
@@ -56,6 +30,54 @@ namespace Detrack.Data.Test
 
 			Assert.AreEqual(result.Count(), 2);
 		}
+
+		private Delivery GetRandomDelivery()
+		{
+			var delivery = new Delivery(DateTime.Now, string.Format("DO{0}", DataHelper.GetNumericString(9)), string.Format("{0} Ubi Avenue {1} Singapore {2}", DataHelper.GetNumber(1, 99), DataHelper.GetNumber(), DataHelper.GetNumber(0, 999)));
+
+			delivery.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
+			delivery.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
+
+			return delivery;
+		}
+
+		private IEnumerable<Delivery> GetRandomDeliveries(int n)
+		{
+			for (var i = 0; i < n; i++)
+			{
+				yield return GetRandomDelivery();
+			}
+		}
+
+		[TestMethod]
+		public void TestTake()
+		{
+			var data = GetRandomDeliveries(201).GetEnumerator();
+
+			var firstHundred = new List<Delivery>(100);
+
+			while (data.MoveNext())
+			{
+				firstHundred.Add(data.Current);
+				if (firstHundred.Count == 100)
+					break;
+			}
+
+			var secondHundred = new List<Delivery>(100);
+
+			while (data.MoveNext())
+			{
+				secondHundred.Add(data.Current);
+				if (secondHundred.Count == 100)
+					break;
+			}
+
+			data.MoveNext();
+			var last = data.Current;
+
+			Assert.IsFalse(data.MoveNext());
+		}
+
 
 		[TestMethod]
 		public void AddDelivery()
@@ -71,9 +93,14 @@ namespace Detrack.Data.Test
 			delivery1.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
 			delivery1.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
 
-			manager.Add(new List<Delivery>{delivery, delivery1});
+			var response = manager.Add(new List<Delivery>{delivery, delivery1});
 
-			Assert.AreEqual(manager.GetAllForDate(DateTime.Now).Count(), 2);
+			Assert.AreEqual(response.Info.Status, Status.ok.ToString()); 
+			Assert.AreEqual(response.Info.Failed, 0);
+
+			var listResponse = manager.GetAllForDate(DateTime.Now);
+
+			Assert.AreEqual(listResponse.Count(), 2);
 		}
 
 		[TestMethod]
@@ -83,9 +110,14 @@ namespace Detrack.Data.Test
 			
 			AddDelivery();
 
-			repo.DeleteDeliveriesForDate(DateTime.Now);
+			var response = repo.DeleteDeliveriesForDate(DateTime.Now);
 
-			Assert.AreEqual(repo.GetAllForDate(DateTime.Now).Count(), 0);
+			Assert.AreEqual(response.Info.Status, Status.ok.ToString());
+			Assert.AreEqual(response.Info.Failed, 0);
+
+			var listResponse = repo.GetAllForDate(DateTime.Now);
+
+			Assert.AreEqual(listResponse.Count(), 0);
 		}
 
 		[TestMethod]
@@ -108,17 +140,23 @@ namespace Detrack.Data.Test
 			delivery1.Address = DataHelper.GetAlphanumericString(50);
 			delivery2.Address = DataHelper.GetAlphanumericString(50);
 
-			repo.EditDeliveries(new List<Delivery> { delivery1, delivery2 });
+			var response = repo.EditDeliveries(new List<Delivery> { delivery1, delivery2 });
+
+			Assert.AreEqual(response.Info.Status, Status.ok.ToString());
+			Assert.AreEqual(response.Info.Failed, 0);
 
 			var results =
 				repo.GetDeliveries(new List<Delivery>
 				{
 					new Delivery(DateTime.Now, deliveryId1),
 					new Delivery(DateTime.Now, deliveryId2)
-				}).ToList();
+				});
 
-			var d1 = results.FirstOrDefault(d => d.Do == deliveryId1);
-			var d2 = results.FirstOrDefault(d => d.Do == deliveryId2);
+			Assert.AreEqual(results.Info.Status, Status.ok.ToString());
+			Assert.AreEqual(results.Info.Failed, 0);
+
+			var d1 = results.Results.Select(d => d.Delivery).FirstOrDefault(d => d.Do == deliveryId1);
+			var d2 = results.Results.Select(d => d.Delivery).FirstOrDefault(d => d.Do == deliveryId2);
 
 			Assert.IsTrue(d1 != null && d1.Address != address1);
 			Assert.IsTrue(d2 != null && d1.Address != address2);
@@ -134,7 +172,10 @@ namespace Detrack.Data.Test
 			var delivery1 = new Delivery(DateTime.Now, deliveryId1, address1);
 
 			AddDelivery();
-			repo.Add(new List<Delivery>{delivery1});
+			var response = repo.Add(new List<Delivery>{delivery1});
+
+			Assert.AreEqual(response.Info.Status, Status.ok.ToString());
+			Assert.AreEqual(response.Info.Failed, 0);
 
 			Assert.AreEqual(repo.GetDelivery(DateTime.Now, deliveryId1).Do, deliveryId1);
 		}

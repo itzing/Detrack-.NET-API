@@ -15,8 +15,15 @@ namespace Detrack.Data.Test
 		[TestMethod]
 		public void GetDeliveries()
 		{
-			var fetcher = new DeliveriesFetcher();
-			Assert.IsTrue(fetcher.GetDeliveries(0).Count() != 0);
+			var fetcher = new SqlDatabase();
+			Assert.IsTrue(fetcher.GetDeliveries().Count() != 0);
+		}
+
+		[TestMethod]
+		public void GetCollections()
+		{
+			var fetcher = new SqlDatabase();
+			Assert.IsTrue(fetcher.GetCollections().Count() != 0);
 		}
 	}
 }
