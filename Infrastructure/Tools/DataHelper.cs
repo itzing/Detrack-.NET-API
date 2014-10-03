@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Detrack.Model;
+using Detrack.Model.Deliveries;
 
 namespace Detrack.Infrastructure.Tools
 {
@@ -33,5 +36,24 @@ namespace Detrack.Infrastructure.Tools
 		{
 			return GetNumber(-3, 3) > 0;
 		}
+
+		public static Delivery GetRandomDelivery()
+		{
+			var delivery = new Delivery(DateTime.Now, string.Format("DO{0}", DataHelper.GetNumericString(9)), string.Format("{0} Ubi Avenue {1} Singapore {2}", DataHelper.GetNumber(1, 99), DataHelper.GetNumber(), DataHelper.GetNumber(0, 999)));
+
+			delivery.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
+			delivery.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
+
+			return delivery;
+		}
+
+		public static IEnumerable<Delivery> GetRandomDeliveries(int n)
+		{
+			for (var i = 0; i < n; i++)
+			{
+				yield return GetRandomDelivery();
+			}
+		}
+
 	}
 }

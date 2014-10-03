@@ -6,11 +6,11 @@ using System.Linq;
 using System.Net;
 using System.Drawing;
 using Detrack.Data.Interfaces;
+using Detrack.Infrastructure;
 using Detrack.Infrastructure.Tools;
 using Detrack.Model.Deliveries;
 using Detrack.Model;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace Detrack.Data
 {
@@ -21,19 +21,18 @@ namespace Detrack.Data
 		private const string AddDeliveriesUrl = @"https://app.detrack.com/api/v1/deliveries/create.json";
 		private const string EditDeliveriesUrl = @"https://app.detrack.com/api/v1/deliveries/update.json";
 		private const string GetSignatureImageUrl = @"https://app.detrack.com/api/v1/deliveries/signature.json";
-		private const string DeleteDeliveriesUrl = @"https://app.detrack.com/api/v1/deliveries/delete/all.json";
+		private const string DeleteAllDeliveriesDateUrl = @"https://app.detrack.com/api/v1/deliveries/delete/all.json";
+		private const string DeleteDeliveriesUrl = @"https://app.detrack.com/api/v1/deliveries/delete.json";
 
 		private readonly JsonSerializerSettings serializeSettings = new JsonSerializerSettings
 		{
 			DateFormatString = "yyyy-MM-dd",
 			NullValueHandling = NullValueHandling.Ignore,
 			DefaultValueHandling = DefaultValueHandling.Ignore,
-			ContractResolver = new CamelCasePropertyNamesContractResolver(),
+			ContractResolver = new LowerCasePropertyNamesContractResolver(),
 		};
 
-		private readonly JsonSerializerSettings deserializeSettings = new JsonSerializerSettings
-		{
-		};
+		private readonly JsonSerializerSettings deserializeSettings = new JsonSerializerSettings();
 
 		private readonly string Key;
 
@@ -98,12 +97,12 @@ namespace Detrack.Data
 			}
 			catch (Exception ex)
 			{
-				return new AddResponse()
+				return new AddResponse
 				{
 					Info = new Info
 					{
 						Status = Status.failed.ToString(),
-						Error = new Error()
+						Error = new Error
 						{
 							Message = ex.Message
 						}
@@ -134,12 +133,48 @@ namespace Detrack.Data
 			}
 			catch (Exception ex)
 			{
-				return new EditResponse()
+				return new EditResponse
 				{
 					Info = new Info
 					{
 						Status = Status.failed.ToString(),
-						Error = new Error()
+						Error = new Error
+						{
+							Message = ex.Message
+						}
+					}
+				};
+			}
+		}
+
+		public DeleteResponse DeleteDeliveries(List<Delivery> deliveries)
+		{
+			try
+			{
+				using (var client = new WebClient())
+				{
+					var fields = new NameValueCollection
+					{
+						{"key", Key},
+						{"json", JsonConvert.SerializeObject(deliveries, serializeSettings)}
+					};
+
+					var respBytes = client.UploadValues(DeleteDeliveriesUrl, fields);
+					var resp = client.Encoding.GetString(respBytes);
+
+					var deliveryDeleteResponse = JsonConvert.DeserializeObject<DeleteResponse>(resp, deserializeSettings);
+
+					return deliveryDeleteResponse;
+				}
+			}
+			catch (Exception ex)
+			{
+				return new DeleteResponse
+				{
+					Info = new Info
+					{
+						Status = Status.failed.ToString(),
+						Error = new Error
 						{
 							Message = ex.Message
 						}
@@ -197,7 +232,7 @@ namespace Detrack.Data
 					{"json", string.Format("{{\"date\":\"{0}-{1}-{2}\"}}", date.Year, date.Month, date.Day)}
 				};
 
-					var respBytes = client.UploadValues(DeleteDeliveriesUrl, fields);
+					var respBytes = client.UploadValues(DeleteAllDeliveriesDateUrl, fields);
 					var resp = client.Encoding.GetString(respBytes);
 
 					var response = JsonConvert.DeserializeObject<DeleteResponse>(resp, deserializeSettings);

@@ -48,11 +48,14 @@
     <Compile Include="..\JsonServiceRequest\Properties\AssemblyVersion.cs">
       <Link>Properties\AssemblyVersion.cs</Link>
     </Compile>
-    <Compile Include="CollectionRepository.cs" />
     <Compile Include="DeliveryRepository.cs" />
+    <Compile Include="DetrackRepository.cs" />
     <Compile Include="Interfaces\IDeliveryRepository.cs" />
+    <Compile Include="ItemType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SQL\SqlDatabase.cs" />
+    <Compile Include="SQL\DeliveryLogRepository.cs" />
+    <Compile Include="SQL\HistoryRepository.cs" />
+    <Compile Include="SyncStatus.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

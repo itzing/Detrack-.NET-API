@@ -1,5 +1,7 @@
 ﻿using System.Linq;
 using Detrack.Data.SQL;
+using Detrack.Model.Collections;
+using Detrack.Model.Deliveries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Detrack.Data.Test
@@ -15,15 +17,15 @@ namespace Detrack.Data.Test
 		[TestMethod]
 		public void GetDeliveries()
 		{
-			var fetcher = new SqlDatabase();
-			Assert.IsTrue(fetcher.GetDeliveries().Count() != 0);
+			var repository = new DeliveryLogRepository<Delivery>();
+			Assert.IsTrue(repository.GetDeliveries(SyncStatus.New).Count() != 0);
 		}
 
 		[TestMethod]
 		public void GetCollections()
 		{
-			var fetcher = new SqlDatabase();
-			Assert.IsTrue(fetcher.GetCollections().Count() != 0);
+			var repository = new DeliveryLogRepository<Collection>();
+			Assert.IsTrue(repository.GetCollections(SyncStatus.New).Count() != 0);
 		}
 	}
 }

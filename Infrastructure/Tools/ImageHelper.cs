@@ -5,7 +5,7 @@ namespace Detrack.Infrastructure.Tools
 {
 	public static class ImageHelper
 	{
-		private const string SignaturesDirectory = ".\\Signatures";
+		private const string SignaturesDirectory = ".\\Images";
 
 		public static void SaveImage(string fileName, Image image)
 		{

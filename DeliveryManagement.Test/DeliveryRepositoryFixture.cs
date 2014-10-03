@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Detrack.Infrastructure.Tools;
 using Detrack.Model;
+using Detrack.Model.Collections;
 using Detrack.Model.Deliveries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -14,9 +15,9 @@ namespace Detrack.Data.Test
 		[TestInitialize]
 		public void Setup()
 		{
-			var repository = new DeliveryRepository();
+			var repository = new DetrackRepository<Delivery>();
 
-			repository.DeleteDeliveriesForDate(DateTime.Now);
+			repository.DeleteForDate(DateTime.Now);
 		}
 
 		[TestMethod]
@@ -24,7 +25,7 @@ namespace Detrack.Data.Test
 		{
 			AddDelivery();
 
-			var manager = new DeliveryRepository();
+			var manager = new DetrackRepository<Delivery>();
 
 			var result = manager.GetAllForDate(DateTime.Now);
 
@@ -82,7 +83,7 @@ namespace Detrack.Data.Test
 		[TestMethod]
 		public void AddDelivery()
 		{
-			var manager = new DeliveryRepository();
+			var manager = new DetrackRepository<Delivery>();
 
 			var delivery = new Delivery(DateTime.Now, string.Format("DO{0}", DataHelper.GetNumericString(9)), string.Format("{0} Ubi Avenue {1} Singapore {2}", DataHelper.GetNumber(1, 99), DataHelper.GetNumber(), DataHelper.GetNumber(0, 999)));
 			var delivery1 = new Delivery(DateTime.Now, string.Format("DO{0}", DataHelper.GetNumericString(9)), string.Format("{0} Ubi Avenue {1} Singapore {2}", DataHelper.GetNumber(1, 99), DataHelper.GetNumber(), DataHelper.GetNumber(0, 999)));
@@ -106,14 +107,44 @@ namespace Detrack.Data.Test
 		[TestMethod]
 		public void DeleteAllDeliveries()
 		{
-			var repo = new DeliveryRepository();
+			var repo = new DetrackRepository<Delivery>();
 			
 			AddDelivery();
 
-			var response = repo.DeleteDeliveriesForDate(DateTime.Now);
+			var response = repo.DeleteForDate(DateTime.Now);
 
 			Assert.AreEqual(response.Info.Status, Status.ok.ToString());
 			Assert.AreEqual(response.Info.Failed, 0);
+
+			var listResponse = repo.GetAllForDate(DateTime.Now);
+
+			Assert.AreEqual(listResponse.Count(), 0);
+		}
+
+		[TestMethod]
+		public void DeleteDeliveries()
+		{
+			var repo = new DetrackRepository<Delivery>();
+
+			var delivery = new Delivery(DateTime.Now, string.Format("DO{0}", DataHelper.GetNumericString(9)), string.Format("{0} Ubi Avenue {1} Singapore {2}", DataHelper.GetNumber(1, 99), DataHelper.GetNumber(), DataHelper.GetNumber(0, 999)));
+			var delivery1 = new Delivery(DateTime.Now, string.Format("DO{0}", DataHelper.GetNumericString(9)), string.Format("{0} Ubi Avenue {1} Singapore {2}", DataHelper.GetNumber(1, 99), DataHelper.GetNumber(), DataHelper.GetNumber(0, 999)));
+
+			delivery.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
+			delivery.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
+
+			delivery1.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
+			delivery1.Items.Add(new Item(DataHelper.GetAlphanumericString(5), DataHelper.GetAlphanumericString(50), DataHelper.GetNumber(1, 50)));
+
+			var response = repo.Add(new List<Delivery> { delivery, delivery1 });
+
+			Assert.AreEqual(response.Info.Status, Status.ok.ToString());
+			Assert.AreEqual(response.Info.Failed, 0);
+
+			var deleteResponse = repo.DeleteItems(new List<Delivery> { delivery, delivery1 });
+
+			Assert.AreEqual(deleteResponse.Info.Status, Status.ok.ToString());
+
+			Assert.AreEqual(deleteResponse.Results.Count(), 2);
 
 			var listResponse = repo.GetAllForDate(DateTime.Now);
 
@@ -133,20 +164,20 @@ namespace Detrack.Data.Test
 
 			var delivery2 = new Delivery(DateTime.Now, deliveryId2, address2);
 
-			var repo = new DeliveryRepository();
+			var repo = new DetrackRepository<Delivery>();
 
 			repo.Add(new List<Delivery>{delivery1, delivery2});
 
 			delivery1.Address = DataHelper.GetAlphanumericString(50);
 			delivery2.Address = DataHelper.GetAlphanumericString(50);
 
-			var response = repo.EditDeliveries(new List<Delivery> { delivery1, delivery2 });
+			var response = repo.EditItems(new List<Delivery> { delivery1, delivery2 });
 
 			Assert.AreEqual(response.Info.Status, Status.ok.ToString());
 			Assert.AreEqual(response.Info.Failed, 0);
 
 			var results =
-				repo.GetDeliveries(new List<Delivery>
+				repo.GetItems(new List<Delivery>
 				{
 					new Delivery(DateTime.Now, deliveryId1),
 					new Delivery(DateTime.Now, deliveryId2)
@@ -163,32 +194,25 @@ namespace Detrack.Data.Test
 		}
 
 		[TestMethod]
-		public void GetDelivery()
+		public void GetSignatureImageDelivery()
 		{
-			var repo = new DeliveryRepository();
-			var deliveryId1 = string.Format("DO{0}", DataHelper.GetNumericString(9));
-			var address1 = DataHelper.GetAlphanumericString(50);
+			var repo = new DetrackRepository<Delivery>("ab1d456a7296733ce90501565eaf3583058b183cb7c6df80");
+			const string deliveryId = "8897978";
 
-			var delivery1 = new Delivery(DateTime.Now, deliveryId1, address1);
+			var delivery = new Delivery(new DateTime(2014, 8, 29), deliveryId);
 
-			AddDelivery();
-			var response = repo.Add(new List<Delivery>{delivery1});
-
-			Assert.AreEqual(response.Info.Status, Status.ok.ToString());
-			Assert.AreEqual(response.Info.Failed, 0);
-
-			Assert.AreEqual(repo.GetDelivery(DateTime.Now, deliveryId1).Do, deliveryId1);
+			Assert.IsNotNull(repo.GetImage(delivery, ImageType.POD_PHOTO_6));
 		}
-
+		
 		[TestMethod]
-		public void GetSignatureImage()
+		public void GetSignatureImageCollection()
 		{
-			var repo = new DeliveryRepository("c9fa6fc31cf7ef373a9925f330ad52ea59244cabda6ef46e");
-			var deliveryId1 = "8897978";
+			var repo = new DetrackRepository<Collection>("ab1d456a7296733ce90501565eaf3583058b183cb7c6df80");
+			const string collectionId = "8897978";
 
-			var delivery1 = new Delivery(new DateTime(2014, 8, 29), deliveryId1);
+			var collection = new Collection(new DateTime(2014, 8, 29), collectionId);
 
-			Assert.IsNotNull(repo.GetSignatureImage(delivery1));
+			Assert.IsNotNull(repo.GetSignatureImage(collection));
 		}
 	}
 }

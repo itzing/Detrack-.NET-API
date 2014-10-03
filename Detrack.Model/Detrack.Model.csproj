@@ -50,6 +50,7 @@
     <Compile Include="Deliveries\Delivery.cs" />
     <Compile Include="EditResponse.cs" />
     <Compile Include="Error.cs" />
+    <Compile Include="ImageType.cs" />
     <Compile Include="Info.cs" />
     <Compile Include="Item.cs" />
     <Compile Include="ListResponse.cs" />

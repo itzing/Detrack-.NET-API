@@ -6,7 +6,7 @@ namespace Detrack.Model
 {
 	public class ListResponse : BaseResponse
 	{
-		public IEnumerable<Delivery> Deliveries { get; set; }
-		public IEnumerable<Collection> Collections { get; set; }
+		public List<Delivery> Deliveries { get; set; }
+		public List<Collection> Collections { get; set; }
 	}
 }

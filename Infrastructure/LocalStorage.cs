@@ -5,7 +5,7 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace Infrastructure
+namespace Detrack.Infrastructure
 {
 	[Serializable]
 	public class LocalStorage

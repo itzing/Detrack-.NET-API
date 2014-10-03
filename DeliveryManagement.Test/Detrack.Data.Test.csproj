@@ -58,8 +58,8 @@
     <Compile Include="..\JsonServiceRequest\Properties\AssemblyVersion.cs">
       <Link>Properties\AssemblyVersion.cs</Link>
     </Compile>
+    <Compile Include="HistoryRepositoryFixture.cs" />
     <Compile Include="DeliveryFetcherFixture.cs" />
-    <Compile Include="CollectionRepositoryFixture.cs" />
     <Compile Include="DeliveryRepositoryFixture.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
